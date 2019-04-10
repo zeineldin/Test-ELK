@@ -1,0 +1,93 @@
+version: '2'
+services:
+  elasticsearch:
+    build:
+      context: elasticsearch/
+      args:
+        ELK_VERSION: 6.4.2
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - elk
+    container_name: elasticsearch
+
+  logstash:
+    build:
+      context: logstash/
+      args:
+        ELK_VERSION: 6.4.2
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+    container_name : logstash
+   
+  nginx1:
+    image: nginx
+    container_name: nginx1
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx1:/usr/share/nginx/html:rw
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "tcp://localhost:5000"
+        tag: "devops-syslog-1"
+    links:
+      - logstash
+    networks:
+      - elk
+
+  nginx2:  
+    image: nginx
+    container_name: nginx2
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx2:/usr/share/nginx/html:rw
+    logging:
+      driver: syslog 
+      options:
+        syslog-address: "tcp://localhost:5000"
+        tag: "devops-syslog-2"
+    links: 
+      - logstash
+    networks:
+      - elk
+
+  kibana:
+    build:
+      context: kibana/
+      args:
+        ELK_VERSION: 6.4.2
+    volumes:
+      - ./kibana/config/:/usr/share/kibana/config:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+networks:
+  elk:
+    driver: bridge
+
+
