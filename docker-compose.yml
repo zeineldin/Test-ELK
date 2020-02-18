@@ -39,7 +39,7 @@ services:
     image: nginx
     container_name: nginx1
     ports:
-      - "80:80"
+      - "7070:80"
       - "443:443"
     restart: unless-stopped
     volumes:
@@ -85,7 +85,32 @@ services:
       - elk
     depends_on:
       - elasticsearch
+    container_name: kibana
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "9090:80"
+    volumes:
+      - ./nginx3/log:/var/log/nginx
+    container_name: nginx3
+    links:
+      - logstash
+    networks:
+      - elk 
+
+  filebeat:
+     image: docker.elastic.co/beats/filebeat:7.3.2
+     entrypoint: "filebeat -e -strict.perms=false"
+     volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./nginx3/log:/var/log/nginx
+     container_name: filebeat-devops
+     links:
+      - logstash
+     networks:
+      - elk
+ 
 networks:
   elk:
     driver: bridge
