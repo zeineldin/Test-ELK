@@ -87,7 +87,7 @@ services:
       - elasticsearch
     container_name: kibana
 
-  nginx:
+  nginx3:
     image: nginx:latest
     ports:
       - "9090:80"
