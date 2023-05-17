@@ -1,4 +1,4 @@
-Test app for ELK 
+This is an example "Test app for ELK" 
 
 There are 2 nginx containers (nginx1 - nginx2) --> They will log to the ELK 
 
